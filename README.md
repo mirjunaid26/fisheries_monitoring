@@ -2,7 +2,7 @@
 
 This repository contains the solution for [The Nature Conservancy Fisheries Monitoring](https://www.kaggle.com/competitions/the-nature-conservancy-fisheries-monitoring) Kaggle competition.
 
-## 📂 Structure
+## Structure
 - `data/`: Dataset (ignored in git)
 - `src/`: Source code
     - `dataset.py`: Data loading and augmentation
@@ -10,7 +10,7 @@ This repository contains the solution for [The Nature Conservancy Fisheries Moni
     - `train.py`: Training loop
     - `predict.py`: Inference script
 
-## 🚀 Usage
+## Usage
 
 ### 1. Environment
 Create the conda environment:
@@ -32,7 +32,7 @@ python src/predict.py --data_dir data
 ```
 The output file `src/submission.csv` will be generated.
 
-## 📊 Results
+## Results
 - **Model**: ResNet50 (Pretrained)
 - **Validation Accuracy**: ~95.5% (Fold 0, Epoch 10)
 - **Loss**: CrossEntropy
