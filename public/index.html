@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fisheries Monitoring | Model Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Fisheries Monitoring</h1>
+            <p class="subtitle">Showcasing the performance of our deep learning model in classifying fish species for The Nature Conservancy.</p>
+            <a href="https://github.com/mirjunaid26/fisheries_monitoring" class="btn">View on GitHub</a>
+        </header>
+
+        <main class="grid">
+            <div class="card">
+                <h2>Accuracy</h2>
+                <div class="stat-value">95.5%</div>
+                <p>Validation accuracy achieved on Fold 0 after 10 epochs using ResNet50.</p>
+            </div>
+            
+            <div class="card">
+                <h2>Model Architecture</h2>
+                <div class="stat-value">ResNet50</div>
+                <p>Pretrained on ImageNet, fine-tuned for fisheries monitoring using Transfer Learning.</p>
+            </div>
+
+            <div class="card">
+                <h2>Dataset</h2>
+                <div class="stat-value">8 Classes</div>
+                <p>Classifying ALB, BET, DOL, LAG, NoF, OTHER, SHARK, and YFT.</p>
+            </div>
+        </main>
+
+        <div class="card">
+            <h2>Project Overview</h2>
+            <p>This project leverages Computer Vision and Deep Learning to assist in fisheries monitoring. By automatically detecting and classifying fish species from boat camera footage, we aim to support sustainable fishing practices.</p>
+            <br>
+            <p>The solution utilizes a robust PyTorch pipeline with Albumentations for data augmentation and a ResNet50 backbone.</p>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2025 Fisheries Monitoring Project.</p>
+        </footer>
+    </div>
+</body>
+</html>
