@@ -1,0 +1,14 @@
+# Data
+data/
+*.zip
+*.7z
+
+# Models
+*.pth
+*.pt
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.DS_Store
