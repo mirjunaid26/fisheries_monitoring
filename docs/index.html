@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fisheries Monitoring | Advanced Deep Learning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <div class="logo">FisheriesAI</div>
+            <nav>
+                <ul>
+                    <li><a href="#architectures">Architectures</a></li>
+                    <li><a href="#getting-started">Getting Started</a></li>
+                    <li><a href="#publishing">Demo</a></li>
+                    <li><a href="https://github.com/mirjunaid26/fisheries_monitoring" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container animate">
+            <h1>Advanced Fisheries Monitoring</h1>
+            <p>State-of-the-art computer vision to detect and classify fish species from boat footage. Powered by ResNet50 and Vision Transformers.</p>
+            <div>
+                <a href="#getting-started" class="btn">Get Started</a>
+                <a href="https://github.com/mirjunaid26/fisheries_monitoring" class="btn btn-secondary">View on GitHub</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="architectures" class="features">
+        <div class="container">
+            <h2>Dual Architecture Power</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-icon">🧠</div>
+                    <h3>CNN (ResNet50)</h3>
+                    <p>Robust feature extraction using a pre-trained ResNet50 backbone. Optimized for simultaneous classification (8 classes) and bounding box regression.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">👁️</div>
+                    <h3>Transformer (ViT)</h3>
+                    <p>Leveraging self-attention mechanisms with `vit_base_patch16_224` for superior global context understanding and localization.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⚡</div>
+                    <h3>Gradio Interface</h3>
+                    <p>Interactive web application for real-time inference. Upload images and instantly get species classification and bounding boxes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="getting-started" class="code-section">
+        <div class="container">
+            <h2>Getting Started</h2>
+            
+            <p>Set up your environment in seconds.</p>
+            <div class="code-block">
+                <div class="code-header">Installation</div>
+                <code>
+                    conda create -n fisheries python=3.10<br>
+                    conda activate fisheries<br>
+                    pip install -r requirements.txt
+                </code>
+            </div>
+
+            <p>Train the models using our optimized scripts.</p>
+            <div class="code-block">
+                <div class="code-header">Train CNN</div>
+                <code>python src/train.py --model_type cnn --epochs 10 --learning_rate 1e-4</code>
+            </div>
+
+             <div class="code-block">
+                <div class="code-header">Train ViT</div>
+                <code>python src/train.py --model_type vit --epochs 10 --learning_rate 5e-5</code>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Fisheries Monitoring Project. Open Source under MIT License.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

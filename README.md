@@ -1,5 +1,8 @@
 # Fisheries Monitoring with Advanced Deep Learning
 
+[![Project Website](https://img.shields.io/badge/Project-Website-blue?style=for-the-badge&logo=github)](https://mirjunaid26.github.io/fisheries_monitoring/)
+
+
 This project implements state-of-the-art computer vision models to detect and classify fish species from fishing boat camera footage.
 
 ## 🧠 Architectures
