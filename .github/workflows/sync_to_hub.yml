@@ -29,10 +29,8 @@ jobs:
           git config --global user.name "GitHub Action"
           echo "https://mirjunaid26:$HF_TOKEN@huggingface.co" > ~/.git-credentials
           
-          # Handle Large Files
-          git lfs install
-          git lfs track "public/model.onnx.data"
-          git add .gitattributes
-          git commit -m "Track large files with LFS" || echo "Nothing to update"
-          
+          # Install filter-repo and strip large file from history
+          pip install git-filter-repo
+          git filter-repo --path public/model.onnx.data --invert-paths --force
+           
           git push https://huggingface.co/spaces/mirjunaid26/fisheries_monitoring main --force
