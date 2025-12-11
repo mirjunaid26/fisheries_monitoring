@@ -1,0 +1,276 @@
+﻿Deep Learning for Sustainable Fisheries Monitoring: Advancing Species Classification with ConvNeXt and State-of-the-Art Architectures
+1. Introduction
+1.1 The Global Imperative for Fisheries Sustainability
+The world's oceans are under siege. As the primary source of protein for nearly 3 billion people, marine ecosystems are critical to global food security, yet they face unprecedented threats from overexploitation, climate change, and habitat degradation. The Food and Agriculture Organization (FAO) estimates that over 34% of global fish stocks are fished at biologically unsustainable levels, a figure that continues to rise despite international conservation efforts.1 Compounding this crisis is the pervasive issue of Illegal, Unreported, and Unregulated (IUU) fishing, which accounts for up to 26 million tons of fish caught annually, undermining management regimes and costing the global economy billions of dollars.
+Central to the challenge of sustainable fisheries management is the lack of reliable, high-resolution data. Traditional stock assessments rely heavily on fishery-dependent data—specifically, catch and effort statistics reported by the vessels themselves or collected by human observers. Human observer programs have historically been the gold standard for verifying catch logs, monitoring bycatch (the incidental capture of non-target species), and ensuring compliance with gear regulations. Observers provide the detailed biological data necessary to estimate population health and interactions with protected species like sea turtles, marine mammals, and seabirds.3
+However, the deployment of human observers is fraught with systemic limitations that render it unscalable for the vast majority of the world's fishing fleets. The financial cost of housing, feeding, and paying trained biologists to live on commercial vessels for weeks at a time is prohibitive for many fisheries, particularly small-scale and artisanal fleets which make up a significant portion of global fishing effort. Logistical constraints limit observer coverage to a fraction of trips—often less than 5% in many fisheries—leaving huge blind spots in our understanding of ocean extraction. Furthermore, the presence of human observers can be dangerous; the job carries high risks of injury and, in extreme cases, intimidation or harassment by crew members involved in illicit activities.1
+1.2 The Paradigm Shift to Electronic Monitoring
+In response to these limitations, Electronic Monitoring (EM) has emerged as a disruptive technology capable of revolutionizing ocean surveillance. An EM system typically consists of a network of tamper-proof cameras, Global Positioning System (GPS) receivers, and hydraulic gear sensors installed directly onto fishing vessels. These sensors detect when fishing activity begins—such as the rotation of a winch or a drop in hydraulic pressure—and automatically trigger video recording. The result is an objective, verifiable, and permanent digital record of fishing operations that can be audited by regulators and scientists on land.1
+The adoption of EM is accelerating globally. In the United States, the National Oceanic and Atmospheric Administration (NOAA) has integrated EM into regulatory frameworks for major fisheries, including the West Coast groundfish trawl and the Alaska pollock fishery, with full implementation schedules targeting the mid-2020s.3 These programs have demonstrated that EM can achieve 100% monitoring coverage at a fraction of the cost of human observers, providing a level of transparency previously unattainable. The benefits extend beyond compliance; EM data allows for more precise stock assessments, better understanding of vessel behavior, and the ability to implement dynamic ocean management strategies where fishing areas can be opened or closed in near real-time based on catch rates.3
+Despite the proven hardware readiness, the widespread deployment of EM faces a critical, non-trivial bottleneck: the data deluge. A single fishing vessel, equipping multiple high-definition cameras recording 24 hours a day for weeks, can generate terabytes of video footage per trip. The current workflow relies on human analysts to manually review this footage—a task that is visually taxing, slow, and prone to fatigue-induced errors. It is estimated that reviewing footage takes approximately 50-70% of the actual recording time, meaning that a 10-day trip could require 5-7 days of analyst time.1 As fleets scale up EM adoption, the volume of data quickly outpaces human review capacity, creating massive backlogs that delay management decisions and negate the timeliness value of the system.2
+1.3 The Role of Deep Learning and Computer Vision
+The only viable solution to the EM data crisis is the automation of video analysis using Artificial Intelligence (AI), specifically Deep Learning (DL) and Computer Vision (CV). By training neural networks to detect, track, and classify fish species as they are hauled on deck, fisheries management agencies can automate the extraction of catch data, flagging only specific events (e.g., the capture of a protected species) for human verification.5
+The application of computer vision to this domain, however, is exceptionally challenging. Unlike the curated datasets used in academic research (e.g., ImageNet or COCO), marine imagery is plagued by severe environmental degradations. Video footage is often captured in uncontrolled lighting conditions—ranging from the harsh glare of the midday sun on wet decks to the low-contrast, noisy grain of night operations illuminated by floodlights. Water droplets, salt spray, and motion blur from the vessel's pitch and roll further obscure visual features.1 Furthermore, the objects of interest—fish—are highly deformable, frequently occluded by nets or other fish, and belong to a taxonomy where species distinctions are fine-grained and subtle.7
+This report presents a comprehensive expansion of the research on automated fisheries monitoring. Building upon a draft proposal that centered on the ConvNeXt-Base architecture, we conduct a rigorous survey of the state-of-the-art (SOTA) in computer vision from 2023 to 2025. We evaluate the comparative advantages of modern Convolutional Neural Networks (CNNs) versus Vision Transformers (ViTs) and Foundation Models (e.g., DINOv2) in the context of marine environments. Furthermore, we propose a holistic system architecture that addresses not just classification, but the entire data pipeline: enhancing low-light footage with Zero-Reference Deep Curve Estimation (Zero-DCE), mitigating class imbalance with Label-Distribution-Aware Margin (LDAM) loss, and reducing annotation costs through Active Learning. This integrated approach provides a roadmap for the next generation of intelligent Electronic Monitoring systems.
+________________
+2. Evolution of Visual Recognition in the Marine Domain
+The trajectory of computer vision in marine science mirrors the broader field's evolution, moving from hand-crafted feature extraction to deep convolutional networks, and recently, to transformer-based architectures and foundation models. Understanding this lineage is crucial for selecting the optimal architecture for modern fisheries monitoring.
+2.1 The Era of Convolutional Neural Networks (CNNs)
+For the past decade, Convolutional Neural Networks have been the workhorse of marine image analysis. Early applications utilized shallow architectures to classify fish based on simple shape descriptors, but these lacked the capacity to generalize across the diverse lighting and pose variations seen in wild data. The breakthrough came with deep residual networks, specifically ResNet-50 and ResNet-101, which allowed for the training of significantly deeper models by mitigating the vanishing gradient problem through skip connections.6
+ResNet architectures became the standard baseline for fisheries tasks. They offered a strong balance between accuracy and computational efficiency, capable of learning hierarchical feature representations—from simple edges and textures in early layers to complex anatomical parts like fins and eyes in deeper layers. Studies consistently showed that ResNets pre-trained on large-scale datasets like ImageNet could be fine-tuned to achieve high accuracy on marine species, even with relatively limited domain-specific data.8
+However, standard CNNs have inherent limitations rooted in their inductive biases. The convolution operation is local and translation-invariant; it processes visual information in small, fixed-sized windows (receptive fields). While this is efficient, it limits the network's ability to model long-range dependencies across an image. For fish classification, where the relationship between distant features (e.g., the ratio of head size to tail length) can be diagnostic, this locality bias can be a hindrance, necessitating very deep networks to achieve a global receptive field.10
+2.2 The Transformer Revolution: ViT and Swin
+The introduction of the Vision Transformer (ViT) in 2020 marked a paradigm shift. Adapting the Transformer architecture from Natural Language Processing (NLP), ViT treats an image as a sequence of patches (tokens), applying self-attention mechanisms to weigh the importance of every patch relative to every other patch. This allows the model to capture global context from the very first layer, theoretically enabling a more holistic understanding of fish morphology.11
+Despite their high theoretical capacity, standard ViTs suffer from quadratic computational complexity with respect to image resolution ($O(N^2)$). This makes them prohibitively expensive for processing high-resolution surveillance footage typically generated by EM systems (often 1080p or 4K). Furthermore, ViTs lack the inductive biases of CNNs (locality and translation invariance), making them data-hungry and harder to train on smaller fisheries datasets without massive pre-training.12
+The Swin Transformer (Hierarchical Vision Transformer using Shifted Windows) emerged to bridge this gap. Swin restricts self-attention computation to local windows (reducing complexity to linear $O(N)$) while allowing for cross-window communication by shifting the window partition between consecutive layers. This hierarchical structure mimics the multi-scale processing of CNNs while retaining the content-adaptive nature of self-attention. Swin Transformers have demonstrated state-of-the-art performance on general vision benchmarks like COCO object detection and ADE20K semantic segmentation, suggesting they could be superior for detecting fish in cluttered deck scenes.11
+2.3 The Modernization of CNNs: ConvNeXt
+In response to the success of Vision Transformers, the computer vision community revisited the design of CNNs to determine if the performance gap was due to the architecture itself or the advanced training recipes (e.g., AdamW optimizer, heavy augmentation, regularization) used for Transformers. This inquiry led to the development of ConvNeXt, a pure convolutional architecture that "modernizes" the ResNet to look and behave like a Transformer.10
+ConvNeXt incorporates several key design choices inspired by Swin Transformers:
+1. Macro Architecture: It adjusts the ratio of blocks in each stage to 3:3:9:3, placing more computation in the third stage, similar to Swin.
+2. Patchify Stem: It replaces the standard $7 \times 7$ stride-2 convolution stem with a $4 \times 4$ stride-4 convolution, utilizing non-overlapping distinct convolutions to downsample the image aggressively at the input, similar to the patch embedding layer in ViT.
+3. Depthwise Convolution: It utilizes depthwise convolutions (spatial mixing) followed by pointwise convolutions (channel mixing). This separates spatial and channel information, mathematically mirroring the self-attention mechanism where spatial weighted sums are computed per head (channel group).
+4. Inverted Bottleneck: The block design follows the Transformer MLP structure: the channel dimension is expanded by a factor of 4 in the middle of the block (wide-narrow-wide) rather than the standard ResNet bottleneck (narrow-wide-narrow).
+5. Large Kernels: Crucially, ConvNeXt adopts large kernel sizes ($7 \times 7$) compared to the standard $3 \times 3$ of VGG and ResNet. This significantly expands the effective receptive field, allowing the network to capture global context and long-range dependencies similar to a Transformer, but with the efficiency of convolution.10
+2.4 Foundation Models and Self-Supervised Learning (SSL)
+The most recent frontier in marine vision (2023-2025) is the application of Foundation Models—massive neural networks pre-trained on vast quantities of unlabeled data using Self-Supervised Learning (SSL). DINOv2 (Self-distillation with NO labels) is a prime example. Trained on 142 million diverse images, DINOv2 produces dense visual descriptors that are highly semantic and robust.
+In the context of fisheries, DINOv2 has shown immense promise for tasks where labeled data is scarce. For instance, the MARINE model utilizes DINOv2 features for action recognition (e.g., detecting predator attacks in underwater video), significantly outperforming supervised methods trained from scratch on small datasets.13 The features extracted by DINOv2 are robust to domain shifts, meaning a model trained on Atlantic Tuna footage might generalize better to Pacific Tuna footage if it uses a DINOv2 backbone compared to a standard ResNet.15
+Furthermore, the release of large-scale domain-specific datasets like FishNet (94k images, 17k species) and MarineMaid (captioned marine imagery) facilitates the training or fine-tuning of these foundation models specifically for aquatic tasks. FishNet allows for "coarse-to-fine" learning, utilizing the hierarchical biological taxonomy (Order -> Family -> Genus -> Species) to improve classification accuracy, while MarineMaid supports vision-language tasks, enabling systems that can generate textual descriptions of fishing events (e.g., "Crew member sorting catch on the conveyor belt").16
+________________
+3. Methodological Framework: The Case for ConvNeXt V2
+While the initial draft focused on ConvNeXt-Base, a rigorous analysis of the current landscape suggests that ConvNeXt V2 is the superior candidate for the backbone of a modern fisheries monitoring system. This section details the architectural advantages of V2 over V1 and Swin Transformers, specifically in the context of marine data challenges.
+3.1 Architectural Evolution: ConvNeXt V2 and Global Response Normalization
+ConvNeXt V1 successfully modernized the CNN, but it faced challenges when combined with Masked Autoencoder (MAE) pre-training—a powerful SSL technique where random patches of an image are masked, and the model must reconstruct them. Standard CNNs struggle with MAE because dense convolutions cannot easily ignore masked regions, leading to feature collapse where many channels in the feature map become redundant or "dead".18
+ConvNeXt V2 addresses this by introducing a Fully Convolutional Masked Autoencoder (FCMAE) framework and, most critically, the Global Response Normalization (GRN) layer.
+3.1.1 The Mechanism of GRN
+The GRN layer is designed to enhance inter-channel feature competition, preventing feature collapse and ensuring that the model utilizes its full capacity. In the context of fine-grained fish classification, where subtle differences in texture or shape are diagnostic, maximizing feature diversity is essential.
+Mathematically, given an input feature map $X \in \mathbb{R}^{H \times W \times C}$, the GRN operation consists of three steps:
+1. Global Feature Aggregation: It first computes a global feature vector $g \in \mathbb{R}^C$ by aggregating spatial information using the $L_2$-norm:
+
+$$G(X) := ||X||_2 = \sqrt{\sum_{i,j} X_{i,j}^2}$$
+
+This statistic captures the overall "energy" or activation level of each channel across the entire spatial domain.
+2. Feature Normalization: It then computes a response normalization function relative to the average channel energy:
+
+$$N(G(X)) = \frac{G(X)}{\sum_k G(X)_k + \epsilon}$$
+
+This step effectively puts channels in competition with each other. Channels with high activation relative to the average are boosted, while suppressed channels are dampened.
+3. Feature Calibration: Finally, the original input features are calibrated using the computed normalization scores:
+
+$$X' = X \cdot \gamma \cdot N(G(X)) + \beta + X$$
+
+Here, $\gamma$ and $\beta$ are learnable affine parameters initialized to zero, allowing the network to learn to use the GRN mechanism gradually.19
+This mechanism acts as a sophisticated gating function, sharpening the feature representation. Empirical results show that ConvNeXt V2 with GRN significantly outperforms V1 on fine-grained benchmarks and object detection tasks, making it highly suitable for distinguishing between visually similar fish species.18
+3.2 Robustness Comparison: ConvNeXt V2 vs. Swin Transformer V2
+A critical requirement for EM systems is robustness to "naturalistic variations"—the uncontrolled changes in object appearance that occur in the wild. Recent studies using large-scale synthetic datasets (NVD) have systematically compared the robustness of ConvNeXt and Swin Transformers, yielding insights directly applicable to fisheries.20
+Table 1: Comparative Robustness Analysis
+Variation Type
+	ConvNeXt (CNN)
+	Swin Transformer (ViT)
+	Relevance to Fisheries
+	Object Scale
+	Superior
+	Moderate
+	High: Fish appear at vastly different sizes depending on their distance from the camera (e.g., in the foreground sorting bin vs. the background discard chute). ConvNeXt's multiscale processing handles this effectively.
+	Object Pose
+	Superior
+	Moderate
+	High: Fish are thrown onto decks in arbitrary orientations (ventral, dorsal, curled). ConvNeXt's translation invariance provides stability against pose shifts.
+	Occlusion
+	Moderate
+	Superior
+	High: Fish are often partially covered by nets, hands, or other fish. Swin's attention mechanism can aggregate context from visible parts to infer the identity of the occluded whole.
+	Synthetic/Domain Shift
+	Superior
+	Poor
+	High: Models trained on one vessel must generalize to others. ConvNeXt shows better out-of-distribution generalization.
+	While Swin V2 excels in occlusion handling, ConvNeXt V2 demonstrates superior robustness to pose and scale variations, which are arguably more prevalent and disruptive in the deck sorting environment. Furthermore, ConvNeXt allows for simpler inference on edge hardware (discussed in Section 7), tipping the balance in its favor as the primary backbone. However, a hybrid approach or ensemble where a lightweight Swin V2 acts as a specialized "occlusion expert" could be a powerful avenue for future research.20
+________________
+4. Enhancing Data Quality: Solving the Low-Light Problem
+One of the most pervasive failures of current EM computer vision systems is poor performance in low-light conditions. Fishing vessels operate 24 hours a day. While floodlights are used at night, the resulting video is often high-contrast, with deep shadows and overexposed highlights, or uniformly dark and noisy. Standard classifiers trained on well-lit images fail catastrophically on this "dark data."
+Traditional image enhancement techniques like Histogram Equalization (HE) or Gamma Correction often introduce unnatural artifacts or amplify noise. Generative Adversarial Networks (GANs) like EnlightenGAN can produce visually pleasing results but are computationally heavy and difficult to train stably. To address this, we propose integrating Zero-Reference Deep Curve Estimation (Zero-DCE), specifically the optimized Zero-DCE++ variant, into the preprocessing pipeline.22
+4.1 Mechanism of Zero-DCE++
+Zero-DCE reformulates low-light enhancement not as an image-to-image translation task (like a GAN), but as an image-specific curve estimation task. A lightweight deep network (DCE-Net) takes the low-light image as input and estimates a set of best-fitting Light-Enhancement curves (LE-curves) that adjust the dynamic range of the pixels.
+The LE-curve is designed to be differentiable and monotonic, defined as:
+$$LE(I(x); \alpha) = I(x) + \alpha I(x)(1 - I(x))
+
+
+$$where $I(x)$ is the input pixel value and $\alpha$ is a trainable parameter map estimated by the network. This quadratic curve adjusts brightness while preserving the range$$
+. To handle complex lighting, the curve is applied iteratively (typically 8 iterations), allowing for high-order adjustments capable of brightening dark areas while preventing overexposure in bright areas.22
+4.2 Non-Reference Loss Functions
+A key advantage of Zero-DCE is that it requires zero paired data. We do not need a dataset of "Dark Fish / Bright Fish" pairs, which is impossible to collect in the wild. Instead, it is trained using a set of carefully formulated non-reference loss functions that implicitly define "good" image quality:
+   1. Spatial Consistency Loss ($L_{spa}$):
+
+$$L_{spa} = \frac{1}{K} \sum_{i=1}^{K} \sum_{j \in \Omega(i)} (|(Y_i - Y_j)| - |(I_i - I_j)|)^2$$
+
+This loss enforces that the spatial difference between neighboring regions in the enhanced image ($Y$) matches the original image ($I$). This preserves the texture and edges of the fish, preventing the blurring often seen in traditional enhancement.25
+   2. Exposure Control Loss ($L_{exp}$):
+
+$$L_{exp} = \frac{1}{M} \sum_{k=1}^{M} |Y_k - E|^2$$
+
+This measures the distance between the average intensity of a local region and a target well-exposed level $E$ (typically set to 0.6). It drives the network to brighten dark regions and dim bright glare.
+   3. Color Constancy Loss ($L_{col}$):
+
+$$L_{col} = \sum_{\forall (p,q) \in \epsilon} (J^p - J^q)^2, \quad \epsilon = \{(R,G), (R,B), (G,B)\}$$
+
+Based on the Gray-World assumption, this loss encourages the average intensity of the R, G, and B channels to be balanced, correcting potential color casts introduced by artificial floodlights.25
+   4. Illumination Smoothness Loss ($L_{tvA}$): Enforces smoothness in the predicted parameter map $\alpha$, ensuring that the enhancement does not introduce localized artifacts or distinct boundaries in uniform areas.
+4.3 Impact on Fisheries Monitoring
+By integrating Zero-DCE++, the EM system effectively normalizes the input stream. Day and night footage are brought to a common perceptual domain before being fed to the ConvNeXt classifier. This "preprocessing normalization" significantly reduces the domain shift the classifier must handle, improving the robustness of species identification across the diurnal cycle. Furthermore, Zero-DCE++ is extremely efficient, capable of running at over 1000 FPS on a single GPU, ensuring it introduces no latency to the real-time detection pipeline.23
+________________
+5. Addressing Class Imbalance: Long-Tailed Learning
+Ecological data is governed by Zipf's law: a few species are extremely common, while the vast majority are rare. In a typical longline haul, one might observe 1,000 Yellowfin Tuna (Head class) but only 5 Blue Sharks (Tail class). Standard deep learning training, using Cross-Entropy (CE) loss, is accuracy-driven and thus dominated by the head classes. The model learns to ignore the tail classes because getting them wrong has a negligible impact on the overall loss.
+However, in fisheries monitoring, the "tail" often consists of Protected, Endangered, and Threatened (PET) species. Detecting these rare events is often the primary regulatory reason for the EM program. Therefore, we must adopt specific strategies for Long-Tailed Learning.
+5.1 Label-Distribution-Aware Margin (LDAM) Loss
+We propose replacing standard Cross-Entropy with LDAM Loss. While Focal Loss down-weights easy examples, it does not explicitly account for the label distribution. LDAM derives a theoretical generalization bound based on the margin.
+The core insight of LDAM is that to generalize well to rare classes (where we have sparse samples), the model requires a larger decision margin. The optimal margin $\Delta_j$ for class $j$ should scale with the inverse of the class frequency:
+
+
+
+
+$$\Delta_j = \frac{C}{n_j^{1/4}}$$
+
+
+where $C$ is a constant and $n_j$ is the number of samples for class $j$.
+The LDAM loss function is formulated as:
+
+
+
+
+$$L_{LDAM}((x, y); f) = -\log \frac{e^{s(z_y - \Delta_y)}}{e^{s(z_y - \Delta_y)} + \sum_{j \neq y} e^{s \cdot z_j}}$$
+
+
+where $s$ is a scaling factor. This forces the model to push the decision boundary much further away for rare classes (like sharks) than for common classes (like tuna). This created "buffer zone" implies that at test time, the model is less likely to misclassify a rare species as a common one, significantly boosting recall for PET species.26
+5.2 Deferred Re-Weighting (DRW)
+Combining LDAM with re-weighting (assigning a higher weight to the loss of rare classes) creates a potent strategy, but applying heavy re-weighting from the start of training can be detrimental. Early in training, the model's feature representation is chaotic; prioritizing rare classes with poor features can lead to instability or overfitting to noise.
+Deferred Re-Weighting (DRW) solves this by defining a two-stage schedule:
+      1. Stage 1 (Feature Learning): Train with standard LDAM loss (or even plain CE) without re-weighting. This allows the backbone (ConvNeXt) to learn a robust, generalizable feature representation from the abundant head classes.
+      2. Stage 2 (Boundary Refinement): After a set number of epochs (typically at the first learning rate decay), switch to re-weighted LDAM. The loss for class $j$ is multiplied by $1/n_j$ (or a smoothed version). This fine-tunes the decision boundaries, shifting them to favor the minority classes using the high-quality features learned in Stage 1.
+Empirical benchmarks on long-tailed datasets like iNaturalist and CIFAR-LT show that LDAM-DRW outperforms both vanilla Cross-Entropy and Focal Loss by significant margins (up to 10-15% top-1 accuracy on tail classes).26 Integrating this strategy is essential for making the fisheries classifier ecologically valid.
+________________
+6. Annotation Efficiency: The Active Learning Loop
+A major barrier to training these advanced models is the cost of annotation. Labeling fish requires expert ichthyologists, not just crowdsourced workers. To optimize this scarce resource, we implement Active Learning (AL).
+6.1 Uncertainty Sampling
+In a traditional workflow, all collected video frames are sent for annotation. In an AL workflow, the model itself selects which frames are most "informative." We employ Uncertainty Sampling, specifically utilizing Entropy as the metric.
+For a given input $x$, the model predicts a probability distribution over classes $P(y|x)$. The entropy $H(x)$ is given by:
+
+
+
+
+$$H(x) = -\sum_{y} P(y|x) \log P(y|x)$$
+
+
+High entropy indicates the model is "confused"—the probability is spread across multiple classes (e.g., the model is 40% sure it's a Bigeye Tuna and 40% sure it's a Yellowfin). These are the edge cases that provide the most gradient signal during training.
+6.2 Probabilistic Active Learning
+Recent research on the SEAMAPD21 dataset has demonstrated the efficacy of Probabilistic Model-Based Active Learning. By using Mixture Density Networks (MDN) or Gaussian Mixture Models (GMM) to model the density of the feature space, the system can identify samples that are not just uncertain, but also representative of the unlabeled distribution (avoiding outliers). This approach has been shown to achieve comparable mAP (Mean Average Precision) to full-dataset training using only a fraction of the labeled data, drastically reducing annotation costs.28
+The proposed pipeline buffers high-entropy frames on the edge device. When the vessel returns to port, only these "hard" examples are uploaded for expert review. The corrected labels are then used to retrain the model, creating a continuous improvement loop that adapts to new species or changing environmental conditions.
+________________
+7. Deployment: Edge Computing Architecture
+Fisheries monitoring systems must operate in remote environments with limited or no internet connectivity. Cloud processing is not feasible; the analysis must happen on the edge.
+7.1 Hardware Selection: Jetson vs. Raspberry Pi
+While the Raspberry Pi 5 is a capable general-purpose computer, it lacks the hardware acceleration required for modern deep learning workflows.
+      * Raspberry Pi 5: Relies on a CPU (ARM Cortex-A76). Inference for a model like ConvNeXt-Base is extremely slow (< 1 FPS). Running Zero-DCE++ (pixel-wise processing) on a CPU introduces unacceptable latency.30
+      * NVIDIA Jetson Orin Nano: Purpose-built for edge AI. It features an Ampere architecture GPU with 1024 CUDA cores and Tensor Cores. It supports TensorRT, NVIDIA's inference optimizer, which can fuse layers and quantize models to FP16.
+      * Performance: The Jetson can run YOLOv8 at 30+ FPS and ConvNeXt at 15-20 FPS. Crucially, it supports the CUDA operations required for real-time Zero-DCE++ enhancement.
+      * Power Efficiency: The Jetson operates within a 7-15W power envelope, comparable to the Pi but with orders of magnitude more AI performance (up to 40 TOPS vs. <1 TOPS).32
+Recommendation: The NVIDIA Jetson Orin Nano is the mandatory hardware platform for the proposed SOTA pipeline.
+7.2 The Edge Pipeline
+The integrated software pipeline on the Jetson device is as follows:
+      1. Ingestion: 1080p Video Stream via MIPI CSI or RTSP.
+      2. Enhancement (Pre-processing): Frame passed to Zero-DCE++ (TensorRT Engine). Dark pixels are brightened, colors balanced. Latency: ~2ms.
+      3. Detection: Enhanced frame passed to YOLOv8-Nano (TensorRT Engine).
+      * Logic: Detects objects of class "Fish."
+      * Optimization: If no fish detected, discard frame (background filtering).
+      4. ROI Extraction: Crop bounding boxes of detected fish.
+      5. Classification: Pass crops to ConvNeXt V2-Base (TensorRT Engine).
+      * Output: Species ID + Confidence Score.
+      6. Active Learning Filter: Calculate Entropy of prediction.
+      * If $H(x) > \text{Threshold}$, save crop to "Upload_Queue" for human review.
+      * Else, log Species ID to "Catch_Log.csv".
+      7. Transmission: Compressed log files sent via satellite (VMS); "Upload_Queue" stored on SSD for physical retrieval at port.
+________________
+8. Datasets and Benchmarks
+To validate the proposed system, we reference key benchmarks in the domain.
+8.1 FishNet
+FishNet is the definitive dataset for modern aquatic recognition. It contains 94,532 images across 17,357 species, structured hierarchically (Order, Family, Genus, Species).
+      * Utility: Training on FishNet allows the ConvNeXt model to learn features that separate high-level biological traits (e.g., body shape of Perciformes vs. Pleuronectiformes) before refining to species-level details. This pre-training is superior to ImageNet for marine tasks.16
+8.2 MarineMaid
+Released in 2025, MarineMaid focuses on marine visual understanding with 12,873 instance-caption pairs.
+      * Utility: It serves as a benchmark for evaluating the "understanding" of the model beyond simple classification. Benchmarks show that while SOTA object detectors achieve reasonable mAP, fine-grained recognition of species in complex scenes (e.g., tangled in nets) remains challenging, highlighting the need for the robustness improvements (Zero-DCE, LDAM) proposed in this report.17
+Table 2: Comparative Performance Metrics (Synthesis of Literature)
+
+
+Architecture
+	Dataset
+	Task
+	Accuracy / mAP
+	Notes
+	ResNet-50
+	FishNet
+	Classification
+	~61% (Family Level)
+	Baseline performance 16
+	ConvNeXt V2
+	ImageNet-1K
+	Classification
+	85.5%
+	Robust to pose/scale 18
+	Swin-B V2
+	ImageNet-1K
+	Classification
+	84.2%
+	Robust to occlusion 11
+	YOLOv8
+	Custom Marine
+	Detection
+	71% mAP
+	Superior speed/acc tradeoff 35
+	LDAM-DRW
+	iNaturalist
+	Long-Tail Cls
+	+10-15% on Tail
+	Essential for bycatch 26
+	________________
+9. Conclusion
+The transition to automated Electronic Monitoring is the single most important technological shift in modern fisheries management. However, the complexity of the marine environment—characterized by low light, extreme class imbalance, and visual chaos—demands more than off-the-shelf AI solutions.
+This report establishes that a naive application of standard models is insufficient. To achieve a truly sustainable monitoring system, we must adopt a holistic architectural strategy:
+      1. Backbone: Upgrade to ConvNeXt V2 to leverage Global Response Normalization for fine-grained feature discrimination and superior robustness to pose variations.
+      2. Enhancement: Integrate Zero-DCE++ to normalize lighting conditions, ensuring the system remains "eyes-open" 24 hours a day.
+      3. Imbalance: Implement LDAM-DRW loss to ensure that the system does not ignore the rare, protected species that are often the primary target of conservation efforts.
+      4. Hardware: Deploy on NVIDIA Jetson platforms to enable the real-time execution of this sophisticated pipeline at the edge.
+By synthesizing these advanced techniques, we move closer to a future where every haul is monitored, every catch is accounted for, and the ocean's resources are managed with the precision and transparency required for long-term sustainability.
+Works cited
+      1. Deep learning methods applied to electronic monitoring data: automated catch event detection for longline fishing | ICES Journal of Marine Science | Oxford Academic, accessed December 11, 2025, https://academic.oup.com/icesjms/article/78/1/25/6053706
+      2. The Nature Conservancy Fisheries Monitoring - Kaggle, accessed December 11, 2025, https://www.kaggle.com/competitions/the-nature-conservancy-fisheries-monitoring
+      3. Electronic Monitoring | NOAA Fisheries, accessed December 11, 2025, https://www.fisheries.noaa.gov/national/fisheries-observers/electronic-monitoring
+      4. Development of smart electronic observation onboard technologies for more sustainable fisheries management - Frontiers, accessed December 11, 2025, https://www.frontiersin.org/journals/marine-science/articles/10.3389/fmars.2025.1545718/full
+      5. Fish-NET: Advancing Aquaculture Management through AI-Enhanced Fish Monitoring and Tracking | Agris on-line Papers in Economics and Informatics, accessed December 11, 2025, https://online.agris.cz/archive/2024/02/09
+      6. Automatic detection, identification and counting of deep-water snappers on underwater baited video using deep learning - Frontiers, accessed December 11, 2025, https://www.frontiersin.org/journals/marine-science/articles/10.3389/fmars.2025.1476616/full
+      7. arxiv.org, accessed December 11, 2025, https://arxiv.org/html/2509.25564v1
+      8. Automatic fish species classification in underwater videos: exploiting pre-trained deep neural network models to compensate for limited labelled data | ICES Journal of Marine Science | Oxford Academic, accessed December 11, 2025, https://academic.oup.com/icesjms/article/75/1/374/3924506
+      9. Comparison of Convolutional Neural Networks and Transformers for the Classification of Images of COVID-19, Pneumonia and Healthy Individuals as Observed with Computed Tomography - PMC - NIH, accessed December 11, 2025, https://pmc.ncbi.nlm.nih.gov/articles/PMC9500990/
+      10. arXiv:2201.03545v1 [cs.CV] 10 Jan 2022, accessed December 11, 2025, https://3dvar.com/Liu2022A.pdf
+      11. Mind the Gap: Evaluating Patch Embeddings from General-Purpose and Histopathology Foundation Models for Cell Segmentation and Classification - arXiv, accessed December 11, 2025, https://arxiv.org/html/2502.02471v1
+      12. ConvNeXt and Its Competitors: A Deep Technical Review for SOTA Convolution Networks, accessed December 11, 2025, https://medium.com/@hexiangnan/convnext-and-its-competitors-a-deep-technical-review-for-sota-convolution-networks-91ebfcae9e9a
+      13. Zero-Shot Industrial Anomaly Detection via CLIP-DINOv2 Multimodal Fusion and Stabilized Attention Pooling - MDPI, accessed December 11, 2025, https://www.mdpi.com/2079-9292/14/24/4785
+      14. MARINE: A Computer Vision Model for Detecting Rare Predator-Prey Interactions in Animal Videos - arXiv, accessed December 11, 2025, https://arxiv.org/html/2407.18289v2
+      15. DINOv2: Self-supervised Learning Model Explained - Encord, accessed December 11, 2025, https://encord.com/blog/dinov2-self-supervised-learning-explained/
+      16. FishNet: A Large-scale Dataset and Benchmark for Fish Recognition, Detection, and Functional Trait Prediction - CVF Open Access, accessed December 11, 2025, https://openaccess.thecvf.com/content/ICCV2023/papers/Khan_FishNet_A_Large-scale_Dataset_and_Benchmark_for_Fish_Recognition_Detection_ICCV_2023_paper.pdf
+      17. MarineMaid: Dataset and Benchmark on Detecting and Understanding Marine Creatures, accessed December 11, 2025, https://openreview.net/forum?id=krUajZ1gHg
+      18. Papers Explained 94: ConvNeXt V2, accessed December 11, 2025, https://medium.com/thedeephub/papers-explained-94-convnext-v2-2ecdabf2081c
+      19. ConvNeXt V2 - Hugging Face, accessed December 11, 2025, https://huggingface.co/docs/transformers/v4.33.3/model_doc/convnextv2
+      20. Finding Differences Between Transformers and ConvNets Using Counterfactual Simulation Testing | OpenReview, accessed December 11, 2025, https://openreview.net/forum?id=Aisi2oEq1sc
+      21. Finding Differences Between Transformers and ConvNets Using Counterfactual Simulation Testing, accessed December 11, 2025, https://proceedings.neurips.cc/paper_files/paper/2022/file/5ce3a49415f78db65a714b4f05c62f4e-Paper-Conference.pdf
+      22. Zero-Reference Deep Curve Estimation for Low-Light Image Enhancement - CVF Open Access, accessed December 11, 2025, https://openaccess.thecvf.com/content_CVPR_2020/papers/Guo_Zero-Reference_Deep_Curve_Estimation_for_Low-Light_Image_Enhancement_CVPR_2020_paper.pdf
+      23. Learning to Enhance Low-Light Image via Zero-Reference Deep Curve Estimation - IEEE Xplore, accessed December 11, 2025, https://ieeexplore.ieee.org/iel7/34/4359286/09369102.pdf
+      24. accessed December 11, 2025, https://li-chongyi.github.io/Proj_Zero-DCE.html#:~:text=(a)%20The%20framework%20of%20Zero,enhance%20a%20given%20input%20image.
+      25. Zero-TCE: Zero Reference Tri-Curve Enhancement for Low-Light Images - MDPI, accessed December 11, 2025, https://www.mdpi.com/2076-3417/15/2/701
+      26. Learning Imbalanced Datasets with Label-Distribution-Aware Margin Loss, accessed December 11, 2025, http://papers.neurips.cc/paper/8435-learning-imbalanced-datasets-with-label-distribution-aware-margin-loss.pdf
+      27. Reproduction of Baselines on Label-Distribution-Aware Margin Loss and Deferred Reweighting Schedule - OpenReview, accessed December 11, 2025, https://openreview.net/pdf/a909c2474fa292791c78b2cd45d93cd114364d6a.pdf
+      28. Probabilistic Model-based Active Learning with Attention Mechanism for Fish Species Recognition - the NOAA Institutional Repository, accessed December 11, 2025, https://repository.library.noaa.gov/view/noaa/67171/noaa_67171_DS1.pdf
+      29. Probabilistic Model-Based Active Learning with Attention Mechanism for Fish Species Recognition - IEEE Xplore, accessed December 11, 2025, https://ieeexplore.ieee.org/document/10337403/
+      30. Nvidia Jetson Nano vs Raspberry Pi - Which one is better for your project? - SocketXP, accessed December 11, 2025, https://www.socketxp.com/iot/nvidia-jetson-nano-vs-raspberry-pi-which-one-is-better-for-your-project/
+      31. Raspberry Pi - Central Marine Computer - NMEA - Monitoring, accessed December 11, 2025, https://smartboatinnovations.com/raspberry-pi/
+      32. Jetson Orin Nano Developer Kit User Guide - Hardware Specs, accessed December 11, 2025, https://developer.nvidia.com/embedded/learn/jetson-orin-nano-devkit-user-guide/hardware_spec.html
+      33. Jetson Nano vs Raspberry Pi AI: The Ultimate Performance Comparison fo - Think Robotics, accessed December 11, 2025, https://thinkrobotics.com/blogs/learn/jetson-nano-vs-raspberry-pi-ai-the-ultimate-performance-comparison-for-edge-computing
+      34. FishNet: A Large-scale Dataset and Benchmark for Fish Recognition, Detection, and Functional Traits Prediction(ICCV 2023) - GitHub, accessed December 11, 2025, https://github.com/faixan-khan/FishNet
+      35. Up-to-Date Scoping Review of Object Detection Methods for Macro Marine Debris - MDPI, accessed December 11, 2025, https://www.mdpi.com/2077-1312/13/8/1590
