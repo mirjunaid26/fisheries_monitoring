@@ -42,14 +42,13 @@
         <!-- Abstract -->
         <section id="abstract">
             <p class="abstract">
-                <strong>Abstract.</strong> Overfishing and Illegal, Unreported, and Unregulated (IUU) fishing threaten
-                global marine ecosystems. To scale monitoring efforts beyond human observers, we present an automated
-                Electronic Monitoring (EM) solution driven by Deep Learning. Our system addresses critical challenges in
-                marine computer vision—specifically <strong>low-light degradation</strong>, <strong>extreme class
-                    imbalance</strong>, and <strong>resource-constrained edge deployment</strong>. By integrating a
-                <strong>ConvNeXt V2</strong> backbone, <strong>Zero-DCE++</strong> for low-light enhancement, and
-                <strong>LDAM Loss</strong> for long-tailed recognition, we achieve robust species classification
-                suitable for real-time deployment on NVIDIA Jetson edge devices.
+                <strong>Abstract.</strong> Overfishing threats require scalable monitoring solutions. We present
+                <strong>SimpleFishNet</strong>, a custom lightweight Convolutional Neural Network (CNN) designed for
+                simultaneous species classification and object detection. By leveraging a shared backbone and
+                <strong>Multi-Task Learning (MTL)</strong>, our model achieves efficient performance on the "The Nature
+                Conservancy Fisheries Monitoring" dataset. Trained on community-verified bounding box annotations,
+                SimpleFishNet demonstrates that compact, custom architectures can effectively monitor fisheries
+                environments without the computational overhead of massive pre-trained models.
             </p>
         </section>
 
@@ -78,28 +77,30 @@
         <!-- Methods -->
         <section id="methods">
             <h2>Methodology</h2>
-            <h3>1. Backbone: ConvNeXt V2</h3>
+            <h2>Methodology</h2>
+            <h3>1. Architecture: SimpleFishNet</h3>
             <p>
-                We transitioned from a standard ResNet50 to <strong>ConvNeXt V2</strong>. This architecture modernizes
-                CNNs with Transformer-like design choices (large 7x7 kernels, GeLU activations) and introduces
-                <strong>Global Response Normalization (GRN)</strong>. GRN prevents feature collapse, crucially improving
-                performance on fine-grained discrimination between morphologically similar tuna species.
+                We implemented a custom 5-layer CNN from scratch. The network features a <strong>Single Shared
+                    Backbone</strong> composed of 4 convolutional blocks (Conv2D &rarr; ReLU &rarr; MaxPool) that
+                extract hierarchical features. This backbone feeds into two parallel heads:
+            </p>
+            <ul>
+                <li><strong>Classification Head:</strong> Supports 8-class species identification (Softmax).</li>
+                <li><strong>Regression Head:</strong> Predicts bounding boxes coordinates (Sigmoid).</li>
+            </ul>
+
+            <h3>2. Loss Function</h3>
+            <p>
+                To handle the dual objective, we employed a weighted <strong>Multi-Task Loss</strong>:
+                $$L_{total} = L_{cls} + \lambda L_{box}$$
+                where $L_{cls}$ is Cross-Entropy Loss and $L_{box}$ is Mean Squared Error (MSE) for localization.
             </p>
 
-            <h3>2. Low-Light Enhancement</h3>
+            <h3>3. Data & Training</h3>
             <p>
-                To handle night operations, we integrated <strong>Zero-DCE++ (Zero-Reference Deep Curve
-                    Estimation)</strong>. Unlike GANs, Zero-DCE estimates light-enhancement curves to iteratively adjust
-                pixel dynamic range. It runs at >1000 FPS, normalizing day and night footage to a common domain before
-                classification.
-            </p>
-
-            <h3>3. Long-Tailed Learning</h3>
-            <p>
-                To protect rare species, we replaced standard Cross-Entropy loss with <strong>LDAM
-                    (Label-Distribution-Aware Margin) Loss</strong> combined with <strong>Deferred Re-Weighting
-                    (DRW)</strong>. This enforces larger decision margins for minority classes, significantly boosting
-                recall for endangered species.
+                The model was trained on the Nature Conservancy dataset using <strong>Official Community Bounding
+                    Boxes</strong> sourced from GitHub. We avoided complex pre-training to verify the architecture's
+                innate ability to learn features from raw data.
             </p>
         </section>
 
@@ -122,28 +123,16 @@
                 </thead>
                 <tbody>
                     <tr>
+                        <td><strong>SimpleFishNet</strong></td>
+                        <td>Multi-Task (Cls + Det)</td>
+                        <td><strong>~1.5 Val Loss</strong></td>
+                        <td>Custom Lightweight Design</td>
+                    </tr>
+                    <tr>
                         <td>ResNet-50</td>
-                        <td>Classification</td>
-                        <td>~61% (Family Level)</td>
-                        <td>Standard Baseline</td>
-                    </tr>
-                    <tr>
-                        <td><strong>ConvNeXt V2</strong></td>
-                        <td>Classification</td>
-                        <td><strong>85.5% (ImageNet)</strong></td>
-                        <td>Robust to Pose & Scale</td>
-                    </tr>
-                    <tr>
-                        <td>YOLOv8</td>
-                        <td>Detection</td>
-                        <td>71% mAP</td>
-                        <td>High Speed Edge Inference</td>
-                    </tr>
-                    <tr>
-                        <td>LDAM Strategy</td>
-                        <td>Long-Tail</td>
-                        <td>+15% Top-1</td>
-                        <td>Improved Rare Class Recall</td>
+                        <td>Classification Only</td>
+                        <td>Baseline</td>
+                        <td>Heavy Parameter Count</td>
                     </tr>
                 </tbody>
             </table>
@@ -153,10 +142,11 @@
         <section id="demo">
             <h2>Interactive Demo & Edge Deployment</h2>
             <p>
-                The system is designed for the <strong>NVIDIA Jetson Orin Nano</strong>, utilizing TensorRT optimization
-                to run the full pipeline (Enhancement &rarr; Detection &rarr; Classification) in real-time (15+ FPS) at
-                the edge. An <strong>Active Learning</strong> loop buffers high-uncertainty frames (using Entropy
-                sampling) for human review.
+                The interactive demo below mimics the <strong>Edge Deployment</strong> workflow. It visualizes how the
+                SimpleFishNet processes a raw input image to output both the species class and the localization bounding
+                box in real-time.
+                <br><em>(Note: For browser stability, this demo uses a simulated inference engine based on the trained
+                    model's logic).</em>
             </p>
 
             <div class="demo-container" id="drop-zone">

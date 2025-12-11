@@ -1,6 +1,6 @@
 import torch
 import torch.onnx
-from src.simple_cnn.model import SimpleFishNet
+from src.model import SimpleFishNet
 import os
 
 def export_to_onnx(model_path, output_path):
@@ -30,7 +30,7 @@ def export_to_onnx(model_path, output_path):
     print("Export complete.")
 
 if __name__ == "__main__":
-    MODEL_PATH = "src/simple_cnn/simple_fish_net_best.pth"
+    MODEL_PATH = "src/simple_fish_net_best.pth"
     OUTPUT_PATH = "public/model.onnx"
     
     if not os.path.exists(MODEL_PATH):
