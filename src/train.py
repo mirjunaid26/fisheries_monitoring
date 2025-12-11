@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import argparse
 import numpy as np
@@ -13,17 +14,131 @@ from albumentations.pytorch import ToTensorV2
 from tqdm import tqdm
 from PIL import Image
 
+# Add project root to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Import Models
 from src.models.cnn import FisheriesResNet
 from src.models.transformer import FisheriesViT
-# from src.model import SimpleFishNet # Deleted
 
 # --- Configuration ---
 IMG_SIZE = 224
 BATCH_SIZE = 32
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu"))
 
-# ... (Dataset class unchanged) ...
+# --- Dataset ---
+class FisheriesDetectionDataset(Dataset):
+    def __init__(self, root_dir, bbox_dir, transform=None):
+        self.root_dir = root_dir
+        self.transform = transform
+        self.classes = sorted([d for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))])
+        self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
+        
+        self.samples = []
+        self._load_samples()
+        self.bbox_map = self._load_bboxes(bbox_dir)
+
+    def _load_samples(self):
+        for cls_name in self.classes:
+            cls_dir = os.path.join(self.root_dir, cls_name)
+            if not os.path.isdir(cls_dir): continue
+            for fname in os.listdir(cls_dir):
+                if fname.lower().endswith(('.jpg', '.jpeg', '.png')):
+                    self.samples.append((os.path.join(cls_dir, fname), self.class_to_idx[cls_name]))
+
+    def _load_bboxes(self, bbox_dir):
+        bbox_map = {}
+        if not os.path.exists(bbox_dir):
+            return bbox_map
+
+        for fname in os.listdir(bbox_dir):
+            if fname.endswith('.json'):
+                path = os.path.join(bbox_dir, fname)
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    for entry in data:
+                        filename = entry.get('filename', '')
+                        basename = os.path.basename(filename)
+                        annotations = entry.get('annotations', [])
+                        if annotations:
+                            rect = annotations[0]
+                            bbox_map[basename] = [rect['x'], rect['y'], rect['width'], rect['height']]
+                        else:
+                            bbox_map[basename] = [0, 0, 0, 0]
+        return bbox_map
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        img_path, label = self.samples[idx]
+        basename = os.path.basename(img_path)
+        
+        # Open with OpenCV for Albumentations
+        image = cv2.imread(img_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
+        # Get raw bbox [x, y, w, h]
+        raw_box = self.bbox_map.get(basename, [0, 0, 0, 0])
+        
+        # Check if box is present (non-zero width/height)
+        has_box = raw_box[2] > 0 and raw_box[3] > 0
+        
+        bboxes = [raw_box] if has_box else []
+        category_ids = [label] if has_box else [] # Dummy category for bbox
+        
+        if self.transform:
+            try:
+                transformed = self.transform(image=image, bboxes=bboxes, category_ids=category_ids)
+                image = transformed['image']
+                t_bboxes = transformed['bboxes']
+                if t_bboxes:
+                    # Update box
+                    raw_box = t_bboxes[0]
+                else:
+                    # If aug removed box or no box initially
+                    raw_box = [0, 0, 0, 0]
+            except Exception as e:
+                # Fallback if augmentation fails (e.g. box out of bounds)
+                # print(f"Augmentation failed: {e}")
+                # Simple resize as fallback
+                resizer = A.Compose([A.Resize(IMG_SIZE, IMG_SIZE), A.Normalize(), ToTensorV2()])
+                transformed = resizer(image=image)
+                image = transformed['image']
+                raw_box = [0, 0, 0, 0]
+
+        # Normalize BBox to [0, 1] relative to AUGMENTED image size (which is IMG_SIZE)
+        x, y, w, h = raw_box
+        if w > 0 and h > 0:
+             norm_box = torch.tensor([
+                 x / IMG_SIZE,
+                 y / IMG_SIZE,
+                 w / IMG_SIZE,
+                 h / IMG_SIZE
+             ], dtype=torch.float32)
+        else:
+             norm_box = torch.zeros(4, dtype=torch.float32)
+
+        norm_box = torch.clamp(norm_box, 0.0, 1.0)
+        
+        return image, torch.tensor(label, dtype=torch.long), norm_box
+
+def get_transforms(split='train'):
+    if split == 'train':
+        return A.Compose([
+            A.Resize(IMG_SIZE, IMG_SIZE),
+            A.HorizontalFlip(p=0.5),
+            A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=15, p=0.5),
+            A.RandomBrightnessContrast(p=0.2),
+            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+            ToTensorV2()
+        ], bbox_params=A.BboxParams(format='coco', label_fields=['category_ids']))
+    else:
+        return A.Compose([
+            A.Resize(IMG_SIZE, IMG_SIZE),
+            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+            ToTensorV2()
+        ], bbox_params=A.BboxParams(format='coco', label_fields=['category_ids']))
 
 # --- Training Function ---
 def train(args):

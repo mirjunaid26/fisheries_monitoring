@@ -65,7 +65,15 @@ python app.py --model_type cnn --model_path src/models/best_model_cnn.pth
 
 ## 🌐 Publishing
 
-This project uses **Gradio** for the web interface. This allows for easy deployment to **Hugging Face Spaces**.
+This project uses **Gradio** for the web interface and can be automatically deployed to **Hugging Face Spaces** using the included GitHub Action.
+
+### Automated Deployment (GitHub Actions)
+1.  Create a **New Space** on Hugging Face (e.g., `fisheries_monitoring`).
+2.  In your GitHub Repository Settings -> Secrets and variables -> Actions:
+    - Create a New Repository Secret named `HF_TOKEN` with your Hugging Face Access Token (Write permissions).
+3.  Edit `.github/workflows/sync_to_hub.yml` to match your Hugging Face username and space name if they differ from the default.
+4.  Push to `main`, and the action will automatically sync your code to the Space!
+
+### Manual Deployment
 1. Create a Space on Hugging Face.
-2. Upload `app.py` and `requirements.txt` to the root of the Space.
-3. Your model is live on the web!
+2. Upload `app.py`, `src/`, and `requirements.txt`.
