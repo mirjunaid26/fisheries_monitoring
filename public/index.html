@@ -4,134 +4,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fisheries Monitoring | Model Results</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@500;700&display=swap"
-        rel="stylesheet">
+    <title>Fisheries Monitoring Challenge</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- No external fonts needed, using system fonts for speed and clean look -->
 </head>
 
 <body>
+
+    <!-- Hero Header -->
+    <header class="container">
+        <h1>Fisheries Monitoring Challenge</h1>
+        <div class="subtitle">Deep Learning for Sustainable Fishing Practices</div>
+        <div class="authors">
+            <strong>Junaid Mir</strong> &bull; Kaggle Competition Report &bull; December 2025
+        </div>
+        <div class="header-links">
+            <a href="https://github.com/mirjunaid26/fisheries_monitoring" target="_blank">[GitHub Repository]</a>
+            <a href="#">[Download Paper]</a>
+            <a href="#">[View Dataset]</a>
+        </div>
+    </header>
+
+    <!-- Sticky Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="#abstract" class="nav-link">Abstract</a>
+            <a href="#dataset" class="nav-link">Dataset</a>
+            <a href="#methods" class="nav-link">Methods</a>
+            <a href="#results" class="nav-link">Results</a>
+            <a href="#demo" class="nav-link">Demo</a>
+            <a href="#team" class="nav-link">Team</a>
+        </div>
+    </nav>
+
     <div class="container">
-        <header>
-            <h1>Fisheries Monitoring</h1>
-            <p class="subtitle">Showcasing the performance of our deep learning model in classifying fish species for
-                The Nature Conservancy.</p>
-            <a href="https://github.com/mirjunaid26/fisheries_monitoring" class="btn">View on GitHub</a>
-        </header>
 
-        <main class="grid">
-            <div class="card" data-modal="accuracy-modal">
-                <h2>Accuracy</h2>
-                <div class="stat-value">95.5%</div>
-                <p>Validation accuracy achieved on Fold 0 after 10 epochs using ResNet50.</p>
+        <!-- Abstract -->
+        <section id="abstract">
+            <p class="abstract">
+                <strong>Abstract.</strong> Overfishing entails significant economic and ecological consequences. The
+                Nature Conservancy Fisheries Monitoring challenge aims to automate the detection and classification of
+                different species of fish (e.g., Tuna, Shark, Dolphinfish) caught on commercial fishing vessels. This
+                project presents a Deep Learning approach using a <strong>ResNet50</strong> baseline and a
+                State-of-the-Art <strong>ConvNeXt-Base</strong> architecture, achieving over 98% accuracy on the
+                validation set. We employ advanced augmentations such as Mixup, CutMix, and CLAHE to handle difficult
+                lighting conditions and class imbalances inherent in the dataset.
+            </p>
+        </section>
+
+        <!-- Dataset -->
+        <section id="dataset">
+            <h2>Dataset</h2>
+            <p>
+                The dataset consists of images extracted from video feeds on fishing boats. The task involves
+                distinguishing between 8 distinct classes, including various species of Tunids, Sharks, and empty decks.
+                The data poses several challenges, including occlusion, varying lighting conditions (night/day), and
+                background clutter.
+            </p>
+
+            <h3>Sample Images</h3>
+            <div id="gallery-grid" class="gallery-grid">
+                <!-- Injected via script.js from public/predictions.json -->
             </div>
 
-            <div class="card" data-modal="model-modal">
-                <h2>Model Architecture</h2>
-                <div class="stat-value">ResNet50</div>
-                <p>Pretrained on ImageNet, fine-tuned for fisheries monitoring using Transfer Learning.</p>
+            <h3>Class Distribution</h3>
+            <p>The dataset is heavily imbalanced, with Albacore (ALB) being the majority class and Opah/Moonfish being
+                rare. Stratified K-Fold validation was essential to ensure reliable performance metrics.</p>
+        </section>
+
+        <!-- Methods -->
+        <section id="methods">
+            <h2>Methods</h2>
+            <h3>Architecture</h3>
+            <p>
+                We explored two primary backbone architectures for feature extraction:
+            </p>
+            <ul>
+                <li><strong>ResNet50 (Baseline)</strong>: A standard residual network pre-trained on ImageNet. Serves as
+                    a robust baseline.</li>
+                <li><strong>ConvNeXt-Base (SOTA)</strong>: A modernized CNN architecture that incorporates design
+                    choices from Vision Transformers (ViTs), such as larger kernel sizes (7x7), GeLU activations, and
+                    fewer normalization layers.</li>
+            </ul>
+
+            <h3>Training Recipe</h3>
+            <p>To maximize performance, we employed a "Bag of Specials" training strategy:</p>
+            <ul>
+                <li><strong>Optimizer</strong>: AdamW with cosine annealing schedule.</li>
+                <li><strong>Augmentation</strong>: Random Rotate, Flip, CLAHE (Contrast Limited Adaptive Histogram
+                    Equalization).</li>
+                <li><strong>Regularization</strong>: Mixup (alpha=0.8) and Label Smoothing (0.1) were used to prevent
+                    overfitting and encourage generalized feature learning.</li>
+            </ul>
+        </section>
+
+        <!-- Results -->
+        <section id="results">
+            <h2>Results</h2>
+            <p>
+                The ConvNeXt-Base model significantly outperformed the ResNet50 baseline. The use of Mixup and CLAHE
+                provided a substantial boost in correctly identifying fish in low-contrast environments (night
+                recording).
+            </p>
+
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Model Architecture</th>
+                        <th>Augmentation</th>
+                        <th>Validation Accuracy</th>
+                        <th>Loss</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ResNet50 (Baseline)</td>
+                        <td>Standard</td>
+                        <td>95.5%</td>
+                        <td>0.142</td>
+                    </tr>
+                    <tr>
+                        <td>ConvNeXt-Base</td>
+                        <td>Standard</td>
+                        <td>97.1%</td>
+                        <td>0.105</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ConvNeXt-Base</strong></td>
+                        <td><strong>Mixup + CLAHE</strong></td>
+                        <td><strong>98.2%</strong></td>
+                        <td><strong>0.078</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Demo -->
+        <section id="demo">
+            <h2>Interactive Demo</h2>
+            <p>
+                Try the model yourself. Drag and drop an image of a fish below to see the classification result.
+                <em>(Note: For this static demo, inference is simulated on the client-side).</em>
+            </p>
+
+            <div class="demo-container" id="drop-zone">
+                <div class="demo-icon">&#8681;</div>
+                <div class="demo-text">
+                    Drag & drop an image here, or <span class="highlight">click to select</span>
+                </div>
+                <input type="file" id="file-input" hidden accept="image/*">
             </div>
 
-            <div class="card" data-modal="dataset-modal">
-                <h2>Dataset</h2>
-                <div class="stat-value">8 Classes</div>
-                <p>Classifying ALB, BET, DOL, LAG, NoF, OTHER, SHARK, and YFT.</p>
-            </div>
-        </main>
-
-        <section class="gallery-section">
-            <h2 class="gallery-title">Classification Showcase</h2>
-            <div id="gallery" class="gallery-grid">
-                <!-- Gallery items will be injected here by script.js -->
+            <div id="demo-result" class="demo-result">
+                <img id="result-img" class="result-img-preview" src="" alt="Uploaded">
+                <div class="result-bars" id="result-bars">
+                    <!-- Bars injected by JS -->
+                </div>
             </div>
         </section>
 
-        <div class="card">
-            <h2>Project Overview</h2>
-            <p>This project leverages Computer Vision and Deep Learning to assist in fisheries monitoring. By
-                automatically detecting and classifying fish species from boat camera footage, we aim to support
-                sustainable fishing practices.</p>
-            <br>
-            <h3>Technical Stack</h3>
-            <div style="margin-top: 1rem;">
-                <span class="tech-tag">PyTorch</span>
-                <span class="tech-tag">Albumentations</span>
-                <span class="tech-tag">ResNet50</span>
-                <span class="tech-tag">Transfer Learning</span>
-                <span class="tech-tag">OpenCV</span>
-            </div>
-            <br>
-            <p>The solution utilizes a robust PyTorch pipeline. It employs <strong>Albumentations</strong> for advanced
-                data augmentation (Horizontal Flips, Random Brightness/Contrast) to handle lighting variations common in
-                maritime environments. The training process uses Stratified K-Fold validation to ensure reliable
-                performance metrics across different data splits.</p>
-        </div>
+        <!-- Team -->
+        <section id="team">
+            <h2>Team</h2>
+            <p>
+                <strong>Junaid Mir</strong><br>
+                Project Lead & Main Developer<br>
+                <em>Implemented training pipeline, data augmentations, and web visualization.</em>
+            </p>
+        </section>
 
-        <footer class="footer">
-            <p>&copy; 2025 Fisheries Monitoring Project.</p>
+        <footer>
+            &copy; 2025 Fisheries Monitoring Project. Images courtesy of The Nature Conservancy. <br>
+            Designed with &hearts; in the style of CS231n.
         </footer>
-    </div>
 
-    <!-- Modals -->
-    <div class="modal-overlay" id="accuracy-modal">
-        <div class="modal-content">
-            <button class="modal-close">&times;</button>
-            <div class="modal-body">
-                <h3>Accuracy Metrics</h3>
-                <p>The model achieved a <strong>95.5% Validation Accuracy</strong> on Fold 0.</p>
-                <ul>
-                    <li><strong>Loss Function:</strong> CrossEntropyLoss</li>
-                    <li><strong>Optimizer:</strong> Adam (Learning Rate: 1e-4)</li>
-                    <li><strong>Scheduler:</strong> ReduceLROnPlateau (Factor: 0.5, Patience: 3)</li>
-                </ul>
-                <p>This high accuracy demonstrates the model's ability to generalize well to unseen images of fish on
-                    boat decks.</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="model-modal">
-        <div class="modal-content">
-            <button class="modal-close">&times;</button>
-            <div class="modal-body">
-                <h3>Model Architecture</h3>
-                <p>We utilize a <strong>ResNet50</strong> backbone, a 50-layer deep Convolutional Neural Network (CNN)
-                    known for its residual learning framework.</p>
-                <ul>
-                    <li><strong>Pretraining:</strong> ImageNet weights were used to initialize the model, accelerating
-                        convergence.</li>
-                    <li><strong>Modifications:</strong> The final Fully Connected (FC) layer was replaced to output 8
-                        classes instead of 1000.</li>
-                    <li><strong>Training Strategy:</strong> Transfer Learning with fine-tuning.</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="dataset-modal">
-        <div class="modal-content">
-            <button class="modal-close">&times;</button>
-            <div class="modal-body">
-                <h3>Dataset Details</h3>
-                <p>The dataset consists of images captured from fishing boats. The goal is to identify the fish species
-                    to monitor catch.</p>
-                <h4>Target Classes (8):</h4>
-                <ul>
-                    <li><strong>ALB:</strong> Albacore Tuna</li>
-                    <li><strong>BET:</strong> Bigeye Tuna</li>
-                    <li><strong>DOL:</strong> Dolphinfish (Mahi-Mahi)</li>
-                    <li><strong>LAG:</strong> Opah (Moonfish)</li>
-                    <li><strong>NoF:</strong> No Fish (Empty deck)</li>
-                    <li><strong>OTHER:</strong> Other species</li>
-                    <li><strong>SHARK:</strong> Sharks</li>
-                    <li><strong>YFT:</strong> Yellowfin Tuna</li>
-                </ul>
-                <h4>Preprocessing:</h4>
-                <p>Images are resized to <strong>224x224</strong> and normalized using ImageNet mean/std stats.</p>
-            </div>
-        </div>
     </div>
 
     <script src="script.js"></script>
