@@ -28,4 +28,11 @@ jobs:
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
           echo "https://mirjunaid26:$HF_TOKEN@huggingface.co" > ~/.git-credentials
+          
+          # Handle Large Files
+          git lfs install
+          git lfs track "public/model.onnx.data"
+          git add .gitattributes
+          git commit -m "Track large files with LFS" || echo "Nothing to update"
+          
           git push https://huggingface.co/spaces/mirjunaid26/fisheries_monitoring main --force
