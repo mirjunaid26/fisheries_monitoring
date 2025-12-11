@@ -84,9 +84,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 ];
 
                 renderBars(mockPredictions);
+
+                // 3. Draw Simulated Bounding Box (SimpleFishNet Demo)
+                drawBoundingBox(resultImg, 'ALB', 0.92);
             }, 800);
         };
         reader.readAsDataURL(file);
+    }
+
+    function drawBoundingBox(imgElement, label, conf) {
+        // Ensure parent is relative
+        const parent = imgElement.parentElement;
+        parent.style.position = 'relative';
+        parent.style.display = 'inline-block'; // Shrink to fit image
+
+        // Clear existing boxes
+        const existing = parent.querySelectorAll('.bounding-box');
+        existing.forEach(el => el.remove());
+
+        // Create Box
+        const box = document.createElement('div');
+        box.className = 'bounding-box';
+
+        // Mock geometry (center-ish)
+        // In a real app, these would come from the ONNX model output
+        // x, y, w, h in %
+        const top = 20 + Math.random() * 10;
+        const left = 20 + Math.random() * 10;
+        const width = 40 + Math.random() * 20;
+        const height = 30 + Math.random() * 20;
+
+        box.style.top = `${top}%`;
+        box.style.left = `${left}%`;
+        box.style.width = `${width}%`;
+        box.style.height = `${height}%`;
+
+        // Label
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'box-label';
+        labelDiv.innerText = `${label} ${(conf * 100).toFixed(0)}%`;
+        box.appendChild(labelDiv);
+
+        parent.appendChild(box);
     }
 
     function renderBars(predictions) {
