@@ -88,15 +88,26 @@ def predict(image, model_type):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_path", type=str, default="src/best_model_cnn.pth")
+    parser.add_argument("--model_path", type=str, default="model.pth") # Default to root model.pth for HF
     parser.add_argument("--model_type", type=str, default="cnn")
     args = parser.parse_args()
     
     global MODEL
-    MODEL = load_model(args.model_type, args.model_path)
+    # Try looking for model in compiled paths
+    possible_paths = [args.model_path, "src/models/best_model_cnn.pth", "best_model_cnn.pth"]
+    loaded_path = None
     
+    for path in possible_paths:
+        if os.path.exists(path):
+            MODEL = load_model(args.model_type, path)
+            if MODEL is not None:
+                loaded_path = path
+                break
+    
+    status_msg = f"Model loaded from {loaded_path}" if loaded_path else "⚠️ No model found. Using Random Weights (Untrained)."
+    print(status_msg)
+
     if MODEL is None:
-        print("Model failed to load. Initializing random model for demo purposes.")
         if args.model_type == 'cnn':
              MODEL = FisheriesResNet(num_classes=len(CLASSES), pretrained=False).to(DEVICE)
         else:
@@ -108,8 +119,8 @@ def main():
         inputs=gr.Image(type="pil"),
         outputs=[gr.Image(type="pil", label="Detected Fish"), gr.Label(num_top_classes=3)],
         title="Fisheries Monitoring AI",
-        description=f"Detecting Fish species using {args.model_type.upper()}. Upload an image.",
-        examples=[] # Add examples if available
+        description=f"Detecting Fish species using {args.model_type.upper()}. {status_msg}",
+        examples=[] 
     )
     
     iface.launch(share=False)
