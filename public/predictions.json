@@ -1,0 +1,50 @@
+[
+  {
+    "image": "samples/ALB.jpg",
+    "label": "ALB",
+    "prediction": "ALB",
+    "confidence": 0.992
+  },
+  {
+    "image": "samples/BET.jpg",
+    "label": "BET",
+    "prediction": "BET",
+    "confidence": 0.885
+  },
+  {
+    "image": "samples/DOL.jpg",
+    "label": "DOL",
+    "prediction": "DOL",
+    "confidence": 0.971
+  },
+  {
+    "image": "samples/LAG.jpg",
+    "label": "LAG",
+    "prediction": "LAG",
+    "confidence": 0.954
+  },
+  {
+    "image": "samples/NoF.jpg",
+    "label": "NoF",
+    "prediction": "NoF",
+    "confidence": 0.998
+  },
+  {
+    "image": "samples/OTHER.jpg",
+    "label": "OTHER",
+    "prediction": "OTHER",
+    "confidence": 0.912
+  },
+  {
+    "image": "samples/SHARK.jpg",
+    "label": "SHARK",
+    "prediction": "SHARK",
+    "confidence": 0.966
+  },
+  {
+    "image": "samples/YFT.jpg",
+    "label": "YFT",
+    "prediction": "YFT",
+    "confidence": 0.943
+  }
+]
