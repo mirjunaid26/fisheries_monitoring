@@ -20,8 +20,8 @@ The project features two advanced architectures located in `src/models/`:
 
 ```
 ├── data/               # Dataset (Train images and JSON annotations)
+├── app.py              # Gradio Web Application
 ├── src/
-│   ├── app.py          # Gradio Web Application
 │   ├── train.py        # Main Training Script
 │   ├── models/         # Neural Architectures
 │   │   ├── cnn.py      # ResNet50 Implementation
@@ -59,12 +59,13 @@ python src/train.py --model_type vit --epochs 10 --learning_rate 5e-5
 Launch the interactive web interface to test the model.
 
 ```bash
-python src/app.py --model_type cnn --model_path src/models/best_model_cnn.pth
+python app.py --model_type cnn --model_path src/models/best_model_cnn.pth
 ```
+*Note: Make sure to select the architecture that matches your trained model.*
 
 ## 🌐 Publishing
 
 This project uses **Gradio** for the web interface. This allows for easy deployment to **Hugging Face Spaces**.
 1. Create a Space on Hugging Face.
-2. Upload `src/app.py` (renaming to `app.py` in root if needed) and `requirements.txt`.
+2. Upload `app.py` and `requirements.txt` to the root of the Space.
 3. Your model is live on the web!

@@ -8,9 +8,9 @@ import argparse
 from albumentations.pytorch import ToTensorV2
 import albumentations as A
 
+# Imports (Now running from root)
 from src.models.cnn import FisheriesResNet
 from src.models.transformer import FisheriesViT
-from src.model import SimpleFishNet
 
 # Constants
 IMG_SIZE = 224
@@ -24,7 +24,9 @@ def load_model(model_type, model_path):
     elif model_type == 'vit':
         model = FisheriesViT(num_classes=len(CLASSES), pretrained=False)
     else:
-        model = SimpleFishNet(num_classes=len(CLASSES))
+        # Fallback to CNN
+        print(f"Unknown model type {model_type}, defaulting to CNN.")
+        model = FisheriesResNet(num_classes=len(CLASSES), pretrained=False)
         
     try:
         model.load_state_dict(torch.load(model_path, map_location=DEVICE))
@@ -98,7 +100,7 @@ def main():
         if args.model_type == 'cnn':
              MODEL = FisheriesResNet(num_classes=len(CLASSES), pretrained=False).to(DEVICE)
         else:
-             MODEL = SimpleFishNet(num_classes=len(CLASSES)).to(DEVICE)
+             MODEL = FisheriesViT(num_classes=len(CLASSES)).to(DEVICE)
         MODEL.eval()
 
     iface = gr.Interface(

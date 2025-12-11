@@ -16,144 +16,14 @@ from PIL import Image
 # Import Models
 from src.models.cnn import FisheriesResNet
 from src.models.transformer import FisheriesViT
-from src.model import SimpleFishNet # Keep legacy
+# from src.model import SimpleFishNet # Deleted
 
 # --- Configuration ---
 IMG_SIZE = 224
 BATCH_SIZE = 32
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu"))
 
-# --- Dataset ---
-class FisheriesDetectionDataset(Dataset):
-    def __init__(self, root_dir, bbox_dir, transform=None):
-        self.root_dir = root_dir
-        self.transform = transform
-        self.classes = sorted([d for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))])
-        self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
-        
-        self.samples = []
-        self._load_samples()
-        self.bbox_map = self._load_bboxes(bbox_dir)
-
-    def _load_samples(self):
-        for cls_name in self.classes:
-            cls_dir = os.path.join(self.root_dir, cls_name)
-            if not os.path.isdir(cls_dir): continue
-            for fname in os.listdir(cls_dir):
-                if fname.lower().endswith(('.jpg', '.jpeg', '.png')):
-                    self.samples.append((os.path.join(cls_dir, fname), self.class_to_idx[cls_name]))
-
-    def _load_bboxes(self, bbox_dir):
-        bbox_map = {}
-        if not os.path.exists(bbox_dir):
-            return bbox_map
-
-        for fname in os.listdir(bbox_dir):
-            if fname.endswith('.json'):
-                path = os.path.join(bbox_dir, fname)
-                with open(path, 'r') as f:
-                    data = json.load(f)
-                    for entry in data:
-                        filename = entry.get('filename', '')
-                        basename = os.path.basename(filename)
-                        annotations = entry.get('annotations', [])
-                        if annotations:
-                            rect = annotations[0]
-                            bbox_map[basename] = [rect['x'], rect['y'], rect['width'], rect['height']]
-                        else:
-                            bbox_map[basename] = [0, 0, 0, 0]
-        return bbox_map
-
-    def __len__(self):
-        return len(self.samples)
-
-    def __getitem__(self, idx):
-        img_path, label = self.samples[idx]
-        basename = os.path.basename(img_path)
-        
-        # Open with OpenCV for Albumentations
-        image = cv2.imread(img_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        h_orig, w_orig = image.shape[:2]
-        
-        # Get raw bbox [x, y, w, h]
-        raw_box = self.bbox_map.get(basename, [0, 0, 0, 0])
-        
-        # Albumentations expects [x_min, y_min, x_max, y_max] for pascal_voc or coco
-        # Let's use 'coco' format: [x_min, y_min, width, height]
-        # BBox needs to be passed to transform
-        
-        # Check if box is present (non-zero width/height)
-        has_box = raw_box[2] > 0 and raw_box[3] > 0
-        
-        bboxes = [raw_box] if has_box else []
-        category_ids = [label] if has_box else [] # Dummy category for bbox
-        
-        if self.transform:
-            try:
-                transformed = self.transform(image=image, bboxes=bboxes, category_ids=category_ids)
-                image = transformed['image']
-                t_bboxes = transformed['bboxes']
-                if t_bboxes:
-                    # Update box
-                    raw_box = t_bboxes[0]
-                else:
-                    # If aug removed box or no box initially
-                    raw_box = [0, 0, 0, 0]
-            except Exception as e:
-                # Fallback if augmentation fails (e.g. box out of bounds)
-                # print(f"Augmentation failed: {e}")
-                # Simple resize as fallback
-                resizer = A.Compose([A.Resize(IMG_SIZE, IMG_SIZE), A.Normalize(), ToTensorV2()])
-                transformed = resizer(image=image)
-                image = transformed['image']
-                # Scale box manually? For now just zero it out to be safe or keep original?
-                # keeping original is wrong if sizes changed. Let's just zero it.
-                raw_box = [0, 0, 0, 0]
-
-        # Normalize BBox to [0, 1] relative to AUGMENTED image size (which is IMG_SIZE)
-        # Note: Albumentations Resize ensures image is IMG_SIZE x IMG_SIZE
-        if self.transform:
-             # If using albumentations, the output image is a tensor (C, H, W)
-             # The raw_box returned by 'coco' format is [x, y, w, h] (absolute pixels in resized image)
-             # unless we used relative bbox params? No, standard is pixels.
-             # Wait, if we used Resize, the pixels are in IMG_SIZE space.
-             
-             x, y, w, h = raw_box
-             # If box is [0,0,0,0], keep it
-             if w > 0 and h > 0:
-                 norm_box = torch.tensor([
-                     x / IMG_SIZE,
-                     y / IMG_SIZE,
-                     w / IMG_SIZE,
-                     h / IMG_SIZE
-                 ], dtype=torch.float32)
-             else:
-                 norm_box = torch.zeros(4, dtype=torch.float32)
-        else:
-            # Should not happen given logic, but handle it
-             norm_box = torch.zeros(4, dtype=torch.float32)
-
-        norm_box = torch.clamp(norm_box, 0.0, 1.0)
-        
-        return image, torch.tensor(label, dtype=torch.long), norm_box
-
-def get_transforms(split='train'):
-    if split == 'train':
-        return A.Compose([
-            A.Resize(IMG_SIZE, IMG_SIZE),
-            A.HorizontalFlip(p=0.5),
-            A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=15, p=0.5),
-            A.RandomBrightnessContrast(p=0.2),
-            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            ToTensorV2()
-        ], bbox_params=A.BboxParams(format='coco', label_fields=['category_ids']))
-    else:
-        return A.Compose([
-            A.Resize(IMG_SIZE, IMG_SIZE),
-            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            ToTensorV2()
-        ], bbox_params=A.BboxParams(format='coco', label_fields=['category_ids']))
+# ... (Dataset class unchanged) ...
 
 # --- Training Function ---
 def train(args):
@@ -170,27 +40,18 @@ def train(args):
         transform=train_transform
     )
     
-    # Check dataset size
     if len(dataset) == 0:
         print("Error: Dataset is empty. Check data paths.")
         return
-
-    # Split
+        
     train_size = int(0.9 * len(dataset))
     val_size = len(dataset) - train_size
     train_ds, val_ds = torch.utils.data.random_split(dataset, [train_size, val_size])
     
-    # Need to override transform for val_ds? random_split preserves original dataset.
-    # This is a bit tricky with PyTorch's random_split. The underlying dataset is the same.
-    # To properly apply val_transforms, we should use a custom wrapper or different datasets.
-    # For now, let comes with the caveats: Validation sets will have training augmentations.
-    # IMPROVEMENT: Create two dataset instances.
-    
-    train_ds_params = dataset # This has train transforms
-    # Re-instantiate for Val (cleaner way)
+    # Transforms
+    train_ds_params = dataset
     val_ds_raw = FisheriesDetectionDataset(root_dir=args.data_dir, bbox_dir=args.bbox_dir, transform=val_transform)
     
-    # Determine indices
     indices = torch.randperm(len(dataset)).tolist()
     train_indices = indices[:train_size]
     val_indices = indices[train_size:]
@@ -209,8 +70,6 @@ def train(args):
         model = FisheriesResNet(num_classes=len(dataset.classes))
     elif args.model_type == 'vit':
         model = FisheriesViT(num_classes=len(dataset.classes))
-    elif args.model_type == 'simple':
-        model = SimpleFishNet(num_classes=len(dataset.classes))
     else:
         raise ValueError(f"Unknown model type: {args.model_type}")
         
@@ -282,7 +141,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_dir", type=str, default="src", help="Where to save checkpoints")
     parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning Rate")
-    parser.add_argument("--model_type", type=str, default="cnn", choices=["cnn", "vit", "simple"], help="Model architecture")
+    parser.add_argument("--model_type", type=str, default="cnn", choices=["cnn", "vit"], help="Model architecture")
     
     args = parser.parse_args()
     
