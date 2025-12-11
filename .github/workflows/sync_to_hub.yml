@@ -18,4 +18,14 @@ jobs:
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push https://mirjunaid26:$HF_TOKEN@huggingface.co/spaces/mirjunaid26/fisheries_monitoring main
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "Error: HF_TOKEN secret is empty or not found!"
+            exit 1
+          fi
+          echo "Token length: ${#HF_TOKEN}"
+          git config --global credential.helper store
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          echo "https://mirjunaid26:$HF_TOKEN@huggingface.co" > ~/.git-credentials
+          git push https://huggingface.co/spaces/mirjunaid26/fisheries_monitoring main --force
